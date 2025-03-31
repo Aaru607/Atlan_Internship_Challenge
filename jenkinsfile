@@ -1,0 +1,42 @@
+
+### **9. Jenkinsfile** (CI/CD Pipeline for Deployment)
+```groovy
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'cloud-cost-optimizer'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    sh 'docker build -t $APP_NAME .'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                script {
+                    sh 'pytest tests/'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    sh 'docker run -d -p 5000:5000 $APP_NAME'
+                }
+            }
+        }
+    }
+}
