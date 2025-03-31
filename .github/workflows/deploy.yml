@@ -1,0 +1,49 @@
+name: Cloud Cost Optimization Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.py'       # Adjust the file types based on your codebase
+      - '**/*.yml'      # GitHub Action files like deploy.yml
+      - '**/*.json'     # Configuration files such as cloud resources
+      - 'Dockerfile'    # Dockerfile for containerization if applicable
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt  # Ensure all dependencies are listed in requirements.txt
+
+      - name: Docker Build & Push
+        run: |
+          docker build -t mycloudsolution:latest .    # Replace mycloudsolution with your app name
+          docker tag mycloudsolution:latest <aws_account_id>.dkr.ecr.<region>.amazonaws.com/mycloudsolution:latest
+          echo ${{ secrets.AWS_ACCESS_KEY_ID }} | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
+          docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/mycloudsolution:latest
+
+      - name: Deploy to AWS Elastic Beanstalk
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region <region>   # Replace with the AWS region
+          eb init -p python-3.x my-cloud-cost-optimization-app --region <region>  # Initialize Elastic Beanstalk application
+          eb deploy  # Deploys the app
+
+      - name: Notify on Deployment
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Cloud Cost Optimization Deployment Completed Successfully!"}' <SLACK_WEBHOOK_URL> # Slack notification (optional)
+
