@@ -1,0 +1,12 @@
+cloud_provider: AWS
+region: us-east-1
+service_usage_metrics: 
+  - CPUUtilization
+  - NetworkIn
+  - NetworkOut
+  - MemoryUtilization
+alert_thresholds:
+  high_cost: 500
+  low_usage: 0.2
+  high_usage: 0.8
+s3_bucket_name: cloud-cost-optimizer-bucket
